@@ -638,4 +638,13 @@ async function changePassword() {
     triggerNotification('Password Changed', 'Your password has been updated.', false);
 }
 
+// ── Core UI Utilities ──
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebar-overlay');
+    if (sb) sb.classList.toggle('active');
+    if (ov) ov.classList.toggle('active');
+}
+function openModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'block'; }
+function closeModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
