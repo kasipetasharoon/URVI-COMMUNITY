@@ -2,7 +2,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyBLKZWIOPPKr18-mVQc4xe_Z4Hd39GciNU",
     authDomain: "urvi-955a9.firebaseapp.com",
-    databaseURL: "https://urvi-955a9-default-rtdb.firebaseio.com",
+    databaseURL: "https://urvi-955a9-default-rtdb.firebaseio.com", 
     projectId: "urvi-955a9",
     storageBucket: "urvi-955a9.firebasestorage.app",
     messagingSenderId: "603036789816",
