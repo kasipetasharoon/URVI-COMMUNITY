@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logging out...</title>
+</head>
+<body>
+    <script>
+        // 1. Clear the session
+        localStorage.clear();
+        
+        // 2. Redirect back to login
+        alert("Session cleared. You can now login as Admin.");
+        window.location.href = 'login.html';
+    </script>
+</body>
+</html>

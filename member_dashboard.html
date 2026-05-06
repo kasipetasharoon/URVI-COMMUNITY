@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URVI — Member Hub</title>
+    <meta name="description" content="URVI Member Dashboard — track your tasks, scores, and team activity.">
+    <link rel="stylesheet" href="admin-style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" defer></script>
+    <style>
+        /* ── Member-specific overrides ── */
+        .rank-card {
+            background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(0,229,255,0.02));
+            border: 1px solid rgba(0,229,255,0.2);
+            border-radius: 16px; padding: 20px 24px;
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 25px;
+        }
+        .rank-avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--primary-teal); object-fit: cover; flex-shrink: 0; box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+        .rank-info { flex: 1; }
+        .rank-info h3 { font-size: 1.15rem; margin-bottom: 4px; }
+        .rank-info p { color: #8ab4f8; font-size: 0.82rem; }
+        .rank-badges { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .rank-badge { background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.25); color: #00e5ff; padding: 3px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+        .rank-badge.gold { background: rgba(255,183,77,0.12); border-color: rgba(255,183,77,0.35); color: #ffb74d; }
+        .rank-badge.red { background: rgba(255,77,77,0.12); border-color: rgba(255,77,77,0.35); color: #ff4d4d; }
+        .rank-num { text-align: center; flex-shrink: 0; }
+        .rank-num span { font-size: 2.2rem; font-weight: 700; color: #ffb74d; display: block; line-height: 1; }
+        .rank-num small { font-size: 0.6rem; color: #8ab4f8; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Score progress bar */
+        .score-progress { margin-top: 12px; }
+        .score-progress-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: #8ab4f8; margin-bottom: 5px; }
+        .score-progress-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; }
+        .score-progress-fill { height: 100%; background: linear-gradient(90deg, #00e5ff, #0097a7); border-radius: 10px; transition: width 1s ease; }
+
+        /* Task card source labels */
+        .task-source-admin { background: rgba(255,183,77,0.12); color: #ffb74d; border: 1px solid rgba(255,183,77,0.3); padding: 2px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 600; }
+        .task-source-head { background: rgba(0,229,255,0.12); color: #00e5ff; border: 1px solid rgba(0,229,255,0.3); padding: 2px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 600; }
+        .task-scope-badge { background: rgba(255,255,255,0.05); color: #ccc; padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; }
+
+        /* Submission history cards */
+        .sub-status-verified { color: #00e5ff; }
+        .sub-status-pending { color: #ffb74d; }
+        .sub-status-rejected { color: #ff4d4d; }
+        .score-awarded-pill { background: rgba(0,229,255,0.12); color: #00e5ff; border: 1px solid rgba(0,229,255,0.25); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-block; }
+        .feedback-block { background: rgba(0,0,0,0.25); padding: 12px; border-left: 3px solid var(--primary-teal); border-radius: 6px; margin-top: 10px; font-size: 0.85rem; color: #ccc; font-style: italic; }
+        .feedback-block.rejected { border-left-color: #ff4d4d; }
+
+        /* Leaderboard rows */
+        .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; transition: 0.2s; }
+        .lb-row:hover { background: rgba(255,255,255,0.06); }
+        .lb-row.is-me { background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.2); }
+        .lb-row-left { display: flex; align-items: center; gap: 10px; }
+
+        /* Announcements */
+        .ann-card { background: rgba(0,229,255,0.04); border: 1px solid rgba(0,229,255,0.1); border-left: 4px solid var(--primary-teal); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; animation: slideUpFade 0.4s ease; }
+        .ann-card.new-ann { border-color: rgba(0,229,255,0.4); background: rgba(0,229,255,0.08); }
+        .ann-card h4 { color: var(--primary-teal); margin-bottom: 5px; font-size: 0.95rem; }
+        .ann-card p { color: #ccc; font-size: 0.85rem; line-height: 1.5; }
+        .ann-card small { color: rgba(255,255,255,0.3); font-size: 0.7rem; display: block; margin-top: 6px; }
+
+        /* Showcase */
+        .showcase-card { background: var(--glass); border: 1px solid rgba(0,229,255,0.18); border-radius: 16px; padding: 20px; transition: 0.3s; }
+        .showcase-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); border-color: rgba(0,229,255,0.35); }
+        .showcase-submitter { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .showcase-dp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-teal); }
+
+        /* Team directory DPs */
+        .team-dp { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(0,229,255,0.4); cursor: pointer; }
+
+        /* Pending count bubble */
+        .pending-bubble { background: rgba(255,183,77,0.2); border: 1px solid rgba(255,183,77,0.4); color: #ffb74d; border-radius: 8px; padding: 12px 18px; margin-bottom: 18px; font-size: 0.85rem; display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+    <script>if (localStorage.getItem('urvi_role') !== 'member') window.location.href = 'login.html';</script>
+
+    <div id="toast-container"></div>
+
+    <div class="dashboard-wrapper">
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <button class="sidebar-close-btn" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+            <div class="sidebar-header">
+                <img src="https://sai-balaji08.github.io/URVI-landing_page/assets/logo.png" alt="URVI" onerror="this.style.display='none'">
+                <h2>URVI</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active" onclick="showSection('overview', this)"><i class="fas fa-chart-line"></i> Dashboard</li>
+                <li onclick="showSection('tasks', this)"><i class="fas fa-tasks"></i> My Tasks <span id="task-badge" class="badge" style="display:none;"></span></li>
+                <li onclick="showSection('my_submissions', this)"><i class="fas fa-folder-open"></i> My Work <span id="sub-badge" class="badge" style="display:none;background:#ffb74d;"></span></li>
+                <li onclick="showSection('announcements', this)"><i class="fas fa-bullhorn"></i> Announcements <span id="ann-badge" class="badge" style="display:none;">New</span></li>
+                <li onclick="showSection('public_showcase', this)"><i class="fas fa-globe"></i> Showcase</li>
+                <li onclick="showSection('my_team', this)"><i class="fas fa-users"></i> My Team</li>
+            </ul>
+            <div class="sidebar-footer">
+                <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </nav>
+
+        <!-- Overlay -->
+        <div class="menu-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Mobile Header -->
+            <div class="mobile-header">
+                <div class="mobile-header-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h2>URVI</h2>
+                        <div class="mobile-section-title" id="mobile-section-title">Dashboard</div>
+                    </div>
+                </div>
+                <div class="mobile-header-right">
+                    <img id="mobile-header-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="mobile-dp" onclick="openMyProfile()" alt="Profile">
+                </div>
+            </div>
+
+            <header class="desktop-header">
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <button class="main-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 id="section-title">Dashboard</h1>
+                </div>
+                <div class="user-profile-btn" onclick="openMyProfile()">
+                    <span id="header-name">Loading...</span>
+                    <img id="header-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="user-dp-mini" alt="DP">
+                </div>
+            </header>
+
+            <div class="content-scroll">
+
+                <!-- 1. DASHBOARD -->
+                <section id="overview" class="dashboard-section active">
+                    <!-- Personal rank card -->
+                    <div class="rank-card" id="rank-card">
+                        <img id="rank-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="rank-avatar" alt="DP">
+                        <div class="rank-info">
+                            <h3 id="rank-name">Loading...</h3>
+                            <p id="rank-team-label">—</p>
+                            <div class="rank-badges" id="rank-badges"></div>
+                            <div class="score-progress">
+                                <div class="score-progress-label">
+                                    <span>Score Progress</span>
+                                    <span id="progress-label">0 / 100</span>
+                                </div>
+                                <div class="score-progress-bar"><div class="score-progress-fill" id="score-bar" style="width:0%;"></div></div>
+                            </div>
+                        </div>
+                        <div class="rank-num">
+                            <span id="rank-num-display">#—</span>
+                            <small>Global Rank</small>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card"><i class="fas fa-star" style="color:#ffb74d;"></i><h3>My Score</h3><p id="stat-my-score">0</p></div>
+                        <div class="stat-card"><i class="fas fa-tasks"></i><h3>Active Tasks</h3><p id="stat-my-tasks">0</p></div>
+                        <div class="stat-card"><i class="fas fa-check-circle"></i><h3>Verified Subs</h3><p id="stat-my-verified">0</p></div>
+
+                        <!-- Global Leaderboard -->
+                        <div class="item-card leaderboard-card">
+                            <h3 style="color:#00e5ff;margin-bottom:16px;font-family:'Playfair Display',serif;"><i class="fas fa-medal"></i> Global Top 5</h3>
+                            <div id="leaderboard-container"><div class="skeleton" style="height:40px;margin-bottom:8px;"></div><div class="skeleton" style="height:40px;margin-bottom:8px;"></div><div class="skeleton" style="height:40px;margin-bottom:8px;"></div></div>
+                        </div>
+
+                        <!-- Team mini leaderboard -->
+                        <div class="item-card activity-card">
+                            <h3 style="color:white;font-size:1rem;margin-bottom:16px;"><i class="fas fa-users" style="color:var(--primary-teal);"></i> Team Standings</h3>
+                            <div id="team-standings-container"><div class="skeleton" style="height:36px;margin-bottom:8px;"></div><div class="skeleton" style="height:36px;margin-bottom:8px;"></div><div class="skeleton" style="height:36px;"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. MY TASKS -->
+                <section id="tasks" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-tasks"></i> My Tasks</h3>
+                    </div>
+                    <div class="grid-container" id="tasks-container"></div>
+                </section>
+
+                <!-- 3. MY WORK HISTORY -->
+                <section id="my_submissions" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-folder-open"></i> My Work History</h3>
+                    </div>
+                    <div id="pending-bubble-container"></div>
+                    <div class="grid-container" id="my-reports-container"></div>
+                </section>
+
+                <!-- 4. ANNOUNCEMENTS -->
+                <section id="announcements" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-bullhorn"></i> Announcements</h3>
+                    </div>
+                    <div id="ann-container"></div>
+                </section>
+
+                <!-- 5. GLOBAL SHOWCASE -->
+                <section id="public_showcase" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-globe"></i> Excellence Showcase</h3>
+                        <p style="color:#8ab4f8;font-size:0.82rem;margin-top:4px;">Top verified work featured by Admin — learn and get inspired.</p>
+                    </div>
+                    <div class="grid-container" id="public-reviews-container"></div>
+                </section>
+
+                <!-- 6. TEAM DIRECTORY -->
+                <section id="my_team" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-users"></i> <span id="team-name-display">My Team</span></h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Profile</th><th>Name</th><th>Role</th><th>Score</th><th>Subs</th></tr></thead>
+                            <tbody id="my-team-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ══ MODALS ══ -->
+
+    <!-- My Profile -->
+    <div id="myProfileModal" class="modal">
+        <div class="modal-content">
+            <h2>My Profile</h2>
+            <div class="dp-upload-container">
+                <img id="my_dp_preview" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="dp-preview" alt="DP">
+                <label for="my_dp_input" class="file-upload-btn"><i class="fas fa-camera"></i> Change Photo</label>
+                <input type="file" id="my_dp_input" accept="image/*" onchange="compressAndPreviewDP(event)">
+            </div>
+            <label for="my_name">Full Name</label>
+            <input type="text" id="my_name" placeholder="Your Name">
+            <label for="my_phone">Phone</label>
+            <input type="text" id="my_phone" placeholder="Phone Number">
+            <label for="my_insta">Instagram ID</label>
+            <input type="text" id="my_insta" placeholder="@username">
+            <label for="my_college">College / Location</label>
+            <input type="text" id="my_college" placeholder="College">
+            <div class="modal-btns">
+                <button onclick="saveMyProfile()">Save Profile</button>
+                <button class="cancel" onclick="closeModal('myProfileModal')">Cancel</button>
+            </div>
+            <!-- Change Password -->
+            <div class="pw-change-section">
+                <button class="pw-change-toggle" onclick="togglePwSection(this)"><i class="fas fa-lock"></i> Change Password <i class="fas fa-chevron-down" style="margin-left:auto;"></i></button>
+                <div class="pw-change-body" style="display:none;">
+                    <label for="cp_current">Current Password</label>
+                    <input type="password" id="cp_current" placeholder="Your current password">
+                    <label for="cp_new">New Password</label>
+                    <input type="password" id="cp_new" placeholder="Min 6 characters">
+                    <label for="cp_confirm">Confirm New Password</label>
+                    <input type="password" id="cp_confirm" placeholder="Re-enter new password">
+                    <p id="cp_error" style="color:#ff4d4d;font-size:0.8rem;margin-top:6px;min-height:18px;"></p>
+                    <button onclick="changePassword()" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:#00e5ff;margin-top:4px;"><i class="fas fa-key"></i> Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Work -->
+    <div id="submitWorkModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:#ffb74d;">Submit Work</h2>
+            <p style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-bottom:16px;">Submitting does not close the task for others — only your submission is tracked.</p>
+            <label>Task</label>
+            <input type="text" id="sw_task_title" disabled style="color:#00e5ff;font-weight:600;">
+            <input type="hidden" id="sw_task_id">
+            <label for="sw_link">Work Link (Drive / GitHub / Doc)</label>
+            <input type="url" id="sw_link" placeholder="https://drive.google.com/...">
+            <label for="sw_desc">Description / Notes</label>
+            <textarea id="sw_desc" placeholder="Briefly describe what you did..." rows="3"></textarea>
+            <div class="modal-btns">
+                <button style="background:#ffb74d;color:#000;" onclick="submitReport()"><i class="fas fa-upload"></i> Submit for Review</button>
+                <button class="cancel" onclick="closeModal('submitWorkModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Teammate Profile -->
+    <div id="viewUserModal" class="modal">
+        <div class="modal-content" style="max-width:400px;padding:0;overflow:hidden;background:linear-gradient(180deg,#0d2a20 0%,#061410 100%);">
+            <div class="id-card-header" style="padding:28px 25px 18px;">
+                <img id="vu_dp" src="" class="id-card-dp" alt="Profile">
+                <h2 id="vu_name" style="margin-bottom:5px;text-align:center;font-family:'Playfair Display',serif;">Name</h2>
+                <span id="vu_role" style="background:rgba(0,229,255,0.15);color:#00e5ff;padding:3px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Role</span>
+            </div>
+            <div style="padding:18px 25px 22px;">
+                <div class="id-card-grid">
+                    <div class="id-card-item"><p>Team</p><h4 id="vu_team">-</h4></div>
+                    <div class="id-card-item"><p>Score</p><h4 id="vu_score" style="color:#ffb74d;font-size:1.2rem;">0</h4></div>
+                    <div class="id-card-item"><p>Submissions</p><h4 id="vu_subs">0</h4></div>
+                    <div class="id-card-item"><p>College</p><h4 id="vu_college">-</h4></div>
+                    <div class="id-card-item"><p>Instagram</p><h4 id="vu_insta">-</h4></div>
+                    <div class="id-card-item"><p>Phone</p><h4 id="vu_phone">-</h4></div>
+                </div>
+                <div class="modal-btns" style="margin-top:18px;">
+                    <button class="cancel" onclick="closeModal('viewUserModal')" style="width:100%;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="member-script.js"></script>
+</body>
+</html>

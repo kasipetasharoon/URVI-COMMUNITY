@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after {
+    margin: 0; padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --teal: #00e5ff;
+    --teal-dim: rgba(0, 229, 255, 0.15);
+    --bg-dark: #030b08;
+    --card-bg: rgba(13, 30, 24, 0.85);
+    --border: rgba(0, 229, 255, 0.2);
+    --danger: #ff4d4d;
+}
+
+body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 20% 50%, #0a2018 0%, #030b08 60%),
+                radial-gradient(ellipse at 80% 20%, #071a12 0%, transparent 60%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ── Animated bg particles ── */
+.bg-particles {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+.bg-particles::before, .bg-particles::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.06;
+    animation: float 12s ease-in-out infinite;
+}
+.bg-particles::before {
+    width: 500px; height: 500px;
+    background: var(--teal);
+    top: -150px; left: -100px;
+}
+.bg-particles::after {
+    width: 350px; height: 350px;
+    background: #00b8cc;
+    bottom: -100px; right: -80px;
+    animation-delay: -6s;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%       { transform: translateY(30px) scale(1.05); }
+}
+
+/* ── Container ── */
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+    z-index: 10;
+    position: relative;
+}
+
+/* ── Card ── */
+.login-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    padding: 44px 40px 36px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+    animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes cardIn { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+
+/* Shake on error */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-8px); }
+    40%       { transform: translateX(8px); }
+    60%       { transform: translateX(-5px); }
+    80%       { transform: translateX(5px); }
+}
+.login-card.shake { animation: shake 0.4s ease; }
+
+/* ── Logo section ── */
+.logo-section { margin-bottom: 32px; }
+.logo-ring {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: rgba(0, 229, 255, 0.05);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 30px rgba(0,229,255,0.15);
+}
+.logo { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0,229,255,0.5)); }
+.logo-section h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    letter-spacing: 6px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(0,229,255,0.3);
+    margin-bottom: 6px;
+}
+.tagline {
+    font-size: 0.72rem;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    opacity: 0.8;
+}
+
+/* ── Inputs ── */
+.input-group { text-align: left; margin-bottom: 18px; }
+.input-group label {
+    display: block;
+    font-size: 0.72rem;
+    color: #8ab4f8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+}
+.input-group label i { margin-right: 6px; color: var(--teal); }
+
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 44px; }
+.eye-btn,
+.login-card .eye-btn,
+button.eye-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none !important;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px;
+    width: auto !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    letter-spacing: 0;
+    font-weight: 400;
+    border-radius: 0;
+    transition: color 0.2s;
+}
+.eye-btn:hover,
+.login-card .eye-btn:hover {
+    color: var(--teal);
+    background: none !important;
+    transform: translateY(-50%) !important;
+    box-shadow: none !important;
+}
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    color: white;
+    outline: none;
+    transition: 0.3s;
+    font-size: 0.9rem;
+}
+input::placeholder { color: rgba(255,255,255,0.25); }
+input:focus {
+    border-color: var(--teal);
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+}
+
+/* ── Buttons ── */
+button#loginBtn, button#updateBtn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #00e5ff, #0097a7);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 10px;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 20px rgba(0,229,255,0.3);
+}
+button#loginBtn:hover, button#updateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,229,255,0.45);
+    background: linear-gradient(135deg, #33eeff, #00b8cc);
+}
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ── Update password header ── */
+.update-header { margin-bottom: 24px; }
+.update-icon {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(0,229,255,0.1);
+    border: 2px solid var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 1.4rem; color: var(--teal);
+    box-shadow: 0 0 20px rgba(0,229,255,0.2);
+}
+.update-header h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 6px; color: var(--teal); }
+
+/* ── Messages ── */
+.error {
+    font-size: 0.82rem;
+    margin-top: 14px;
+    min-height: 22px;
+    line-height: 1.4;
+    transition: 0.3s;
+}
+.info-text { font-size: 0.8rem; color: rgba(255,255,255,0.45); margin-bottom: 22px; line-height: 1.5; }
+
+.footer-note {
+    margin-top: 22px;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.2);
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+    .login-card { padding: 36px 24px 28px; border-radius: 20px; }
+    .logo-section h1 { font-size: 2rem; }
+}

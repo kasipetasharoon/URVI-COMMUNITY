@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URVI — Admin Hub</title>
+    <meta name="description" content="URVI Admin Hub — manage members, teams, tasks and reports.">
+    <link rel="stylesheet" href="admin-style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" defer></script>
+</head>
+<body>
+    <script>if (localStorage.getItem('urvi_role') !== 'admin') window.location.href = 'login.html';</script>
+
+    <div id="toast-container"></div>
+
+    <div class="dashboard-wrapper">
+
+        <!-- ── Main Content ── -->
+        <main class="main-content">
+
+            <!-- ── Mobile Header ── -->
+            <div class="mobile-header">
+                <div class="mobile-header-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()" id="mobile-menu-btn" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h2>URVI</h2>
+                        <div class="mobile-section-title" id="mobile-section-title">Command Center</div>
+                    </div>
+                </div>
+                <div class="mobile-header-right">
+                    <img id="mobile-header-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="mobile-dp" onclick="openMyProfile()" alt="Profile">
+                </div>
+            </div>
+
+            <header class="desktop-header">
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <button class="main-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+                    <h1 id="section-title">Command Center</h1>
+                </div>
+                <div class="user-profile-btn" onclick="openMyProfile()">
+                    <span id="header-name">Admin</span>
+                    <img id="header-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="user-dp-mini" alt="Profile">
+                </div>
+            </header>
+
+            <div class="content-scroll">
+
+                <!-- 1. OVERVIEW -->
+                <section id="overview" class="dashboard-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card"><i class="fas fa-users"></i><h3>Total Members</h3><p id="stat-members">0</p></div>
+                        <div class="stat-card"><i class="fas fa-sitemap"></i><h3>Active Teams</h3><p id="stat-teams">0</p></div>
+                        <div class="stat-card"><i class="fas fa-tasks"></i><h3>Active Tasks</h3><p id="stat-tasks">0</p></div>
+                        <div class="stat-card"><i class="fas fa-file-alt"></i><h3>Pending Reviews</h3><p id="stat-pending">0</p></div>
+
+                        <div class="item-card leaderboard-card">
+                            <h3 style="color:#00e5ff;margin-bottom:15px;font-family:'Playfair Display',serif;"><i class="fas fa-trophy"></i> Global Leaderboard</h3>
+                            <div id="leaderboard-container"><div class="skeleton" style="height:50px;margin-bottom:10px;"></div><div class="skeleton" style="height:50px;margin-bottom:10px;"></div><div class="skeleton" style="height:50px;"></div></div>
+                        </div>
+
+                        <div class="item-card activity-card">
+                            <h3 style="color:white;margin-bottom:15px;font-size:1rem;"><i class="fas fa-bolt" style="color:#ffb74d;"></i> Recent Activity</h3>
+                            <div id="activity-feed"><div class="skeleton" style="height:36px;margin-bottom:8px;"></div><div class="skeleton" style="height:36px;margin-bottom:8px;"></div><div class="skeleton" style="height:36px;"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. DIRECTORY -->
+                <section id="members" class="dashboard-section">
+                    <div class="section-controls">
+                        <input type="text" id="searchMember" placeholder="🔍 Search ID or Name..." onkeyup="renderMembers()">
+                        <select id="filterTeam" onchange="renderMembers()"><option value="all">All Teams</option></select>
+                        <select id="filterRole" onchange="renderMembers()">
+                            <option value="all">All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="team_head">Team Head</option>
+                            <option value="member">Member</option>
+                        </select>
+                        <button class="action-btn" onclick="openUserModal()"><i class="fas fa-plus"></i> Add Member</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Profile</th><th>ID</th><th>Name</th><th>Role</th><th>Team</th><th>Subs</th><th>Score</th><th>Actions</th></tr></thead>
+                            <tbody id="members-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 3. TEAMS -->
+                <section id="teams" class="dashboard-section">
+                    <div class="section-controls">
+                        <button class="action-btn" onclick="openModal('teamModal')"><i class="fas fa-plus"></i> Create Team</button>
+                    </div>
+                    <div class="grid-container" id="teams-container"></div>
+                </section>
+
+                <!-- 4. TASK BOARD -->
+                <section id="tasks" class="dashboard-section">
+                    <div class="section-controls">
+                        <input type="text" id="searchTask" placeholder="🔍 Search tasks..." onkeyup="renderTasks()">
+                        <button class="action-btn" onclick="openModal('taskModal')"><i class="fas fa-plus"></i> Assign Task</button>
+                    </div>
+                    <div class="task-tabs">
+                        <button class="tab-btn active" id="tab-active" onclick="filterTasks('active')">Active</button>
+                        <button class="tab-btn" id="tab-completed" onclick="filterTasks('completed')">Completed</button>
+                        <button class="tab-btn" id="tab-all" onclick="filterTasks('all')">All Tasks</button>
+                    </div>
+                    <div class="grid-container" id="tasks-container"></div>
+                </section>
+
+                <!-- 5. REVIEWS -->
+                <section id="submissions" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-inbox"></i> Pending Submissions</h3>
+                    </div>
+                    <div class="grid-container" id="reports-container"></div>
+                </section>
+
+                <!-- 6. SHOWCASE -->
+                <section id="global_showcase" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-star"></i> Public Excellence Showcase</h3>
+                    </div>
+                    <p style="color:#8ab4f8;font-size:0.85rem;margin-bottom:20px;">Verified reports marked public are displayed here to all members.</p>
+                    <div class="grid-container" id="public-reviews-container"></div>
+                </section>
+
+                <!-- 7. ANNOUNCEMENTS -->
+                <section id="announcements" class="dashboard-section">
+                    <div class="ann-layout">
+                        <div class="ann-form-card">
+                            <h3><i class="fas fa-bullhorn"></i> Broadcast Announcement</h3>
+                            <label for="ann_title">Title</label>
+                            <input type="text" id="ann_title" placeholder="Announcement title...">
+                            <label for="ann_body">Message</label>
+                            <textarea id="ann_body" placeholder="Write your message here..." rows="6"></textarea>
+                            <div style="margin-top:16px;">
+                                <button class="action-btn" onclick="sendAnnouncement()" style="width:100%;"><i class="fas fa-paper-plane"></i> Send to All Members</button>
+                            </div>
+                        </div>
+                        <div class="ann-history-card">
+                            <h3><i class="fas fa-history"></i> Past Announcements</h3>
+                            <div id="ann-history-list"><div class="skeleton" style="height:80px;margin-bottom:10px;"></div><div class="skeleton" style="height:80px;"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+            </div><!-- /content-scroll -->
+        </main>
+    </div>
+
+    <!-- ══ MODALS ══ -->
+
+    <!-- View User Profile -->
+    <div id="viewUserModal" class="modal">
+        <div class="modal-content" style="max-width:400px;padding:0;overflow:hidden;background:linear-gradient(180deg,#0d2a20 0%,#061410 100%);">
+            <div class="id-card-header" style="padding:30px 25px 20px;">
+                <img id="vu_dp" src="" class="id-card-dp" alt="Profile">
+                <h2 id="vu_name" style="margin-bottom:5px;text-align:center;font-family:'Playfair Display',serif;">Name</h2>
+                <span id="vu_role" style="background:rgba(0,229,255,0.15);color:#00e5ff;padding:3px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Role</span>
+            </div>
+            <div style="padding:20px 25px 25px;">
+                <div class="id-card-grid">
+                    <div class="id-card-item"><p>Team</p><h4 id="vu_team">-</h4></div>
+                    <div class="id-card-item"><p>Total Score</p><h4 id="vu_score" style="color:#ffb74d;font-size:1.2rem;">0</h4></div>
+                    <div class="id-card-item"><p>Submissions</p><h4 id="vu_subs">0</h4></div>
+                    <div class="id-card-item"><p>College</p><h4 id="vu_college">-</h4></div>
+                    <div class="id-card-item"><p>Phone</p><h4 id="vu_phone">-</h4></div>
+                    <div class="id-card-item"><p>Instagram</p><h4 id="vu_insta">-</h4></div>
+                </div>
+                <div class="id-card-item" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+                    <p>Email</p><h4 id="vu_email">-</h4>
+                </div>
+                <div class="modal-btns" style="margin-top:20px;">
+                    <button class="cancel" onclick="closeModal('viewUserModal')">Close Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Profile Edit -->
+    <div id="myProfileModal" class="modal">
+        <div class="modal-content">
+            <h2>My Profile</h2>
+            <div class="dp-upload-container">
+                <img id="my_dp_preview" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="dp-preview" alt="DP Preview">
+                <label for="my_dp_input" class="file-upload-btn"><i class="fas fa-camera"></i> Change Photo</label>
+                <input type="file" id="my_dp_input" accept="image/*" onchange="compressAndPreviewDP(event)">
+            </div>
+            <label for="my_name">Full Name</label>
+            <input type="text" id="my_name" placeholder="Your Name">
+            <label for="my_phone">Phone Number</label>
+            <input type="text" id="my_phone" placeholder="Phone">
+            <label for="my_email">Email</label>
+            <input type="email" id="my_email" placeholder="Email">
+            <label for="my_insta">Instagram ID</label>
+            <input type="text" id="my_insta" placeholder="@username">
+            <label for="my_college">College / Location</label>
+            <input type="text" id="my_college" placeholder="College">
+            <div class="modal-btns">
+                <button onclick="saveMyProfile()">Save Profile</button>
+                <button class="cancel" onclick="closeModal('myProfileModal')">Cancel</button>
+            </div>
+            <!-- Change Password -->
+            <div class="pw-change-section">
+                <button class="pw-change-toggle" onclick="togglePwSection(this)"><i class="fas fa-lock"></i> Change Password <i class="fas fa-chevron-down" style="margin-left:auto;"></i></button>
+                <div class="pw-change-body" style="display:none;">
+                    <label for="cp_current">Current Password</label>
+                    <input type="password" id="cp_current" placeholder="Your current password">
+                    <label for="cp_new">New Password</label>
+                    <input type="password" id="cp_new" placeholder="Min 6 characters">
+                    <label for="cp_confirm">Confirm New Password</label>
+                    <input type="password" id="cp_confirm" placeholder="Re-enter new password">
+                    <p id="cp_error" style="color:#ff4d4d;font-size:0.8rem;margin-top:6px;min-height:18px;"></p>
+                    <button onclick="changePassword()" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:#00e5ff;margin-top:4px;"><i class="fas fa-key"></i> Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Edit Member -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h2 id="userModalTitle">Add Member</h2>
+            <label for="u_id">Member ID</label>
+            <input type="text" id="u_id" placeholder="e.g. URVI-1234">
+            <label for="u_name">Full Name</label>
+            <input type="text" id="u_name" placeholder="Full Name">
+            <label for="u_phone">Phone</label>
+            <input type="text" id="u_phone" placeholder="Phone Number">
+            <label for="u_email">Email</label>
+            <input type="email" id="u_email" placeholder="Email Address">
+            <label for="u_insta">Instagram</label>
+            <input type="text" id="u_insta" placeholder="@username">
+            <label for="u_college">College / Location</label>
+            <input type="text" id="u_college" placeholder="College">
+            <label for="u_role">Role</label>
+            <select id="u_role">
+                <option value="member">Member</option>
+                <option value="team_head">Team Head</option>
+                <option value="admin">Admin</option>
+            </select>
+            <label for="u_team">Team</label>
+            <select id="u_team"><option value="">No Team</option></select>
+            <label for="u_score">Total Score (Manual)</label>
+            <input type="number" id="u_score" placeholder="0">
+            <div class="modal-btns">
+                <button onclick="saveUser()">Save</button>
+                <button class="cancel action-btn danger" id="delete-user-btn" onclick="deleteCurrentUser()" style="display:none;">Delete</button>
+                <button class="cancel" onclick="closeModal('userModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Team -->
+    <div id="teamModal" class="modal">
+        <div class="modal-content">
+            <h2>Create Team</h2>
+            <label for="t_id">Team ID</label>
+            <input type="text" id="t_id" placeholder="e.g. team-design">
+            <label for="t_name">Team Name</label>
+            <input type="text" id="t_name" placeholder="Team Name">
+            <label for="t_head">Head's Member ID</label>
+            <input type="text" id="t_head" placeholder="Member ID">
+            <div class="modal-btns">
+                <button onclick="saveTeam()">Create</button>
+                <button class="cancel" onclick="closeModal('teamModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Details -->
+    <div id="teamDetailsModal" class="modal">
+        <div class="modal-content" style="max-width:580px;">
+            <h2 id="td_title">Team Name</h2>
+            <p style="color:#8ab4f8;"><strong style="color:white;">Head:</strong> <span id="td_head"></span></p>
+            <hr style="margin:15px 0;border-color:rgba(0,229,255,0.15);">
+            <div class="table-container" style="max-height:280px;overflow-y:auto;">
+                <table style="font-size:0.85rem;">
+                    <thead><tr><th>ID</th><th>Name</th><th>Role</th></tr></thead>
+                    <tbody id="td_members_tbody"></tbody>
+                </table>
+            </div>
+            <div class="modal-btns" style="margin-top:20px;">
+                <button class="cancel" onclick="closeModal('teamDetailsModal')" style="width:100%;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Task -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <h2>Assign Task</h2>
+            <label for="tsk_title">Task Title</label>
+            <input type="text" id="tsk_title" placeholder="Task Title">
+            <label for="tsk_desc">Description</label>
+            <textarea id="tsk_desc" placeholder="Task description..." rows="4"></textarea>
+            <label for="tsk_team">Target Team</label>
+            <select id="tsk_team" onchange="updateTaskAssigneeDropdown()"><option value="">Select Team</option></select>
+            <label for="tsk_assignee">Assigned To</label>
+            <select id="tsk_assignee" disabled><option value="entire_team">Entire Team (Everyone)</option></select>
+            <div class="modal-btns">
+                <button onclick="saveTask()">Assign</button>
+                <button class="cancel" onclick="closeModal('taskModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Details -->
+    <div id="taskDetailsModal" class="modal">
+        <div class="modal-content" style="max-width:580px;">
+            <h2 id="taskd_title">Task</h2>
+            <p style="color:#8ab4f8;font-size:0.85rem;margin-bottom:5px;"><strong style="color:white;">Team:</strong> <span id="taskd_team"></span> &nbsp;|&nbsp; <strong style="color:white;">Assigned:</strong> <span id="taskd_person"></span></p>
+            <p style="font-size:0.9rem;color:#ccc;margin-top:10px;" id="taskd_desc"></p>
+            <hr style="margin:15px 0;border-color:rgba(0,229,255,0.15);">
+            <h4 style="color:#8ab4f8;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Submissions</h4>
+            <div id="taskd_activity" style="max-height:280px;overflow-y:auto;"></div>
+            <div class="modal-btns" style="margin-top:20px;">
+                <button class="cancel" onclick="closeModal('taskDetailsModal')" style="width:100%;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <h2>Verify Submission</h2>
+            <p id="rev_desc" style="font-size:0.88rem;color:#ccc;margin-bottom:12px;line-height:1.6;"></p>
+            <a id="rev_link" target="_blank" style="color:var(--primary-teal);display:block;margin-bottom:16px;font-size:0.85rem;text-decoration:underline;"><i class="fas fa-external-link-alt"></i> View Submitted Work</a>
+            <label for="rev_score">Award Points</label>
+            <input type="number" id="rev_score" placeholder="e.g. 50">
+            <label for="rev_feedback">Admin Feedback</label>
+            <textarea id="rev_feedback" placeholder="Write feedback for the member..." rows="3"></textarea>
+            <label style="display:flex;align-items:center;gap:10px;margin-top:14px;cursor:pointer;">
+                <input type="checkbox" id="rev_public" style="width:auto;"> Make feedback public in Showcase
+            </label>
+            <div class="modal-btns" style="margin-top:18px;">
+                <button onclick="submitReview()" style="background:var(--primary-teal);">✓ Verify &amp; Award</button>
+                <button class="cancel" onclick="rejectReport()" style="background:rgba(255,77,77,0.1);color:#ff4d4d;border:1px solid rgba(255,77,77,0.3);">✗ Reject</button>
+                <button class="cancel" onclick="closeModal('reviewModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="admin-script.js"></script>
+</body>
+</html>

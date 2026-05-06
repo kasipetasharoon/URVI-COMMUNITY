@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URVI — Team Head Hub</title>
+    <meta name="description" content="URVI Team Head Dashboard — manage your team, tasks and submissions.">
+    <link rel="stylesheet" href="admin-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .ann-box { background: rgba(0,229,255,0.05); border-left: 4px solid var(--primary-teal); padding: 15px 18px; border-radius: 10px; margin-bottom: 12px; animation: slideUpFade 0.4s ease; }
+        .ann-box h4 { color: var(--primary-teal); margin-bottom: 5px; font-size: 0.95rem; }
+        .ann-box p { color: #ccc; font-size: 0.85rem; line-height: 1.5; }
+        .ann-box small { color: rgba(255,255,255,0.3); font-size: 0.7rem; display: block; margin-top: 6px; }
+        .score-pill { display: inline-block; background: rgba(0,229,255,0.15); color: #00e5ff; border: 1px solid rgba(0,229,255,0.3); padding: 3px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-top: 8px; }
+        .status-verified { color: #00e5ff; }
+        .status-pending { color: #ffb74d; }
+        .status-rejected { color: #ff4d4d; }
+        .my-score-card { background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,229,255,0.03)); border: 1px solid rgba(0,229,255,0.25); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 25px; }
+        .my-score-avatar { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--primary-teal); object-fit: cover; box-shadow: 0 0 15px rgba(0,229,255,0.3); flex-shrink: 0; }
+        .my-score-info h3 { font-size: 1.1rem; margin-bottom: 4px; }
+        .my-score-info p { font-size: 0.8rem; color: #8ab4f8; }
+        .my-score-num { margin-left: auto; text-align: center; flex-shrink: 0; }
+        .my-score-num span { font-size: 2rem; font-weight: 700; color: #ffb74d; display: block; }
+        .my-score-num small { font-size: 0.65rem; color: #8ab4f8; text-transform: uppercase; letter-spacing: 1px; }
+        .team-rank-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; }
+        .team-rank-row:hover { background: rgba(255,255,255,0.06); }
+        .sub-status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sub-status-badge.verified { background: rgba(0,229,255,0.15); color: #00e5ff; border: 1px solid rgba(0,229,255,0.3); }
+        .sub-status-badge.pending { background: rgba(255,183,77,0.15); color: #ffb74d; border: 1px solid rgba(255,183,77,0.3); }
+        .sub-status-badge.rejected { background: rgba(255,77,77,0.15); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.3); }
+        .task-desc-preview { font-size: 0.82rem; color: rgba(255,255,255,0.5); margin: 6px 0 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <script>if (localStorage.getItem('urvi_role') !== 'team_head') window.location.href = 'login.html';</script>
+
+    <div id="toast-container"></div>
+
+    <div class="dashboard-wrapper">
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <button class="sidebar-close-btn" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+            <div class="sidebar-header">
+                <img src="https://sai-balaji08.github.io/URVI-landing_page/assets/logo.png" alt="URVI" onerror="this.style.display='none'">
+                <h2>URVI</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active" onclick="showSection('overview', this)"><i class="fas fa-chart-line"></i> Dashboard</li>
+                <li onclick="showSection('my_team', this)"><i class="fas fa-users"></i> My Team</li>
+                <li onclick="showSection('tasks', this)"><i class="fas fa-tasks"></i> Task Board <span id="task-badge" class="badge" style="display:none;"></span></li>
+                <li onclick="showSection('submissions', this)"><i class="fas fa-upload"></i> Submissions</li>
+                <li onclick="showSection('announcements', this)"><i class="fas fa-bullhorn"></i> Announcements <span id="ann-badge" class="badge" style="display:none;">New</span></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </nav>
+
+        <!-- Overlay -->
+        <div class="menu-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Mobile Header -->
+            <div class="mobile-header">
+                <div class="mobile-header-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h2>URVI</h2>
+                        <div class="mobile-section-title" id="mobile-section-title">Dashboard</div>
+                    </div>
+                </div>
+                <div class="mobile-header-right">
+                    <img id="mobile-header-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="mobile-dp" onclick="openMyProfile()" alt="Profile">
+                </div>
+            </div>
+
+            <header class="desktop-header">
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <button class="main-menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 id="section-title">Dashboard</h1>
+                </div>
+                <div class="user-profile-btn" onclick="openMyProfile()">
+                    <span id="header-name">Loading...</span>
+                    <img id="header-dp" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="user-dp-mini" alt="DP">
+                </div>
+            </header>
+
+            <div class="content-scroll">
+
+                <!-- 1. DASHBOARD -->
+                <section id="overview" class="dashboard-section active">
+                    <!-- My personal score card -->
+                    <div class="my-score-card" id="my-score-card">
+                        <img id="my-score-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="my-score-avatar" alt="Avatar">
+                        <div class="my-score-info">
+                            <h3 id="my-score-name">Loading...</h3>
+                            <p id="my-team-name-label" style="color:var(--primary-teal);font-weight:500;">Team Head</p>
+                            <p id="my-subs-label">0 verified submissions</p>
+                        </div>
+                        <div class="my-score-num">
+                            <span id="my-personal-score">0</span>
+                            <small>Your Score</small>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card"><i class="fas fa-users"></i><h3>Team Size</h3><p id="stat-team-size">0</p></div>
+                        <div class="stat-card"><i class="fas fa-tasks"></i><h3>Active Tasks</h3><p id="stat-tasks">0</p></div>
+                        <div class="stat-card"><i class="fas fa-trophy"></i><h3>Team Score</h3><p id="stat-team-score">0</p></div>
+
+                        <div class="item-card leaderboard-card">
+                            <h3 style="color:#00e5ff;margin-bottom:15px;font-family:'Playfair Display',serif;"><i class="fas fa-medal"></i> Global Top 3</h3>
+                            <div id="leaderboard-container"><div class="skeleton" style="height:40px;margin-bottom:8px;"></div><div class="skeleton" style="height:40px;margin-bottom:8px;"></div><div class="skeleton" style="height:40px;"></div></div>
+                        </div>
+
+                        <div class="item-card activity-card">
+                            <h3 style="color:white;margin-bottom:15px;font-size:1rem;"><i class="fas fa-users" style="color:var(--primary-teal);"></i> Team Leaderboard</h3>
+                            <div id="team-leaderboard-container"><div class="skeleton" style="height:36px;margin-bottom:8px;"></div><div class="skeleton" style="height:36px;margin-bottom:8px;"></div><div class="skeleton" style="height:36px;"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. MY TEAM -->
+                <section id="my_team" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-users"></i> <span id="my-team-header-name">My Team</span></h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Profile</th><th>Name</th><th>Role</th><th>Subs</th><th>Score</th></tr></thead>
+                            <tbody id="my-team-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 3. TASK BOARD -->
+                <section id="tasks" class="dashboard-section">
+                    <div class="section-controls">
+                        <input type="text" id="searchTask" placeholder="🔍 Search tasks..." onkeyup="renderTasks()" style="flex:1;">
+                        <button class="action-btn" onclick="openModal('internalTaskModal')"><i class="fas fa-plus"></i> Assign Task</button>
+                    </div>
+                    <div class="task-tabs">
+                        <button class="tab-btn active" id="tab-active" onclick="filterTaskView('active')">Active</button>
+                        <button class="tab-btn" id="tab-completed" onclick="filterTaskView('completed')">Completed</button>
+                    </div>
+                    <div class="grid-container" id="tasks-container"></div>
+                </section>
+
+                <!-- 4. SUBMISSIONS -->
+                <section id="submissions" class="dashboard-section">
+                    <div class="section-controls">
+                        <button class="action-btn" style="background:#ffb74d;color:#000;box-shadow:0 4px 15px rgba(255,183,77,0.3);" onclick="openSubmitModal()"><i class="fas fa-upload"></i> Submit My Work</button>
+                    </div>
+                    <div class="grid-container" id="submissions-container"></div>
+                </section>
+
+                <!-- 5. ANNOUNCEMENTS -->
+                <section id="announcements" class="dashboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-bullhorn"></i> Admin Announcements</h3>
+                    </div>
+                    <div id="ann-container"></div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ══ MODALS ══ -->
+
+    <!-- My Profile -->
+    <div id="myProfileModal" class="modal">
+        <div class="modal-content">
+            <h2>My Profile</h2>
+            <div class="dp-upload-container">
+                <img id="my_dp_preview" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="dp-preview" alt="DP Preview">
+                <label for="my_dp_input" class="file-upload-btn"><i class="fas fa-camera"></i> Change Photo</label>
+                <input type="file" id="my_dp_input" accept="image/*" onchange="compressAndPreviewDP(event)">
+            </div>
+            <label for="my_name">Full Name</label>
+            <input type="text" id="my_name" placeholder="Your Name">
+            <label for="my_phone">Phone</label>
+            <input type="text" id="my_phone" placeholder="Phone Number">
+            <label for="my_insta">Instagram ID</label>
+            <input type="text" id="my_insta" placeholder="@username">
+            <label for="my_college">College / Location</label>
+            <input type="text" id="my_college" placeholder="College">
+            <div class="modal-btns">
+                <button onclick="saveMyProfile()">Save Profile</button>
+                <button class="cancel" onclick="closeModal('myProfileModal')">Cancel</button>
+            </div>
+            <!-- Change Password -->
+            <div class="pw-change-section">
+                <button class="pw-change-toggle" onclick="togglePwSection(this)"><i class="fas fa-lock"></i> Change Password <i class="fas fa-chevron-down" style="margin-left:auto;"></i></button>
+                <div class="pw-change-body" style="display:none;">
+                    <label for="cp_current">Current Password</label>
+                    <input type="password" id="cp_current" placeholder="Your current password">
+                    <label for="cp_new">New Password</label>
+                    <input type="password" id="cp_new" placeholder="Min 6 characters">
+                    <label for="cp_confirm">Confirm New Password</label>
+                    <input type="password" id="cp_confirm" placeholder="Re-enter new password">
+                    <p id="cp_error" style="color:#ff4d4d;font-size:0.8rem;margin-top:6px;min-height:18px;"></p>
+                    <button onclick="changePassword()" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:#00e5ff;margin-top:4px;"><i class="fas fa-key"></i> Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View User Profile (ID Card) -->
+    <div id="viewUserModal" class="modal">
+        <div class="modal-content" style="max-width:400px;padding:0;overflow:hidden;background:linear-gradient(180deg,#0d2a20 0%,#061410 100%);">
+            <div class="id-card-header" style="padding:28px 25px 18px;">
+                <img id="vu_dp" src="" class="id-card-dp" alt="Profile">
+                <h2 id="vu_name" style="margin-bottom:5px;text-align:center;font-family:'Playfair Display',serif;">Name</h2>
+                <span id="vu_role" style="background:rgba(0,229,255,0.15);color:#00e5ff;padding:3px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Role</span>
+            </div>
+            <div style="padding:18px 25px 22px;">
+                <div class="id-card-grid">
+                    <div class="id-card-item"><p>Team</p><h4 id="vu_team">-</h4></div>
+                    <div class="id-card-item"><p>Total Score</p><h4 id="vu_score" style="color:#ffb74d;font-size:1.2rem;">0</h4></div>
+                    <div class="id-card-item"><p>Submissions</p><h4 id="vu_subs">0</h4></div>
+                    <div class="id-card-item"><p>College</p><h4 id="vu_college">-</h4></div>
+                    <div class="id-card-item"><p>Phone</p><h4 id="vu_phone">-</h4></div>
+                    <div class="id-card-item"><p>Instagram</p><h4 id="vu_insta">-</h4></div>
+                </div>
+                <div class="id-card-item" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+                    <p>Email</p><h4 id="vu_email">-</h4>
+                </div>
+                <div class="modal-btns" style="margin-top:18px;">
+                    <button class="cancel" onclick="closeModal('viewUserModal')" style="width:100%;">Close Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Internal Task -->
+    <div id="internalTaskModal" class="modal">
+        <div class="modal-content">
+            <h2>Assign Task</h2>
+            <label for="it_title">Task Title</label>
+            <input type="text" id="it_title" placeholder="Task title...">
+            <label for="it_desc">Description</label>
+            <textarea id="it_desc" placeholder="Details about the task..." rows="4"></textarea>
+            <label for="it_assignee">Assign To</label>
+            <select id="it_assignee"><option value="entire_team">Entire Team (Everyone)</option></select>
+            <div class="modal-btns">
+                <button onclick="saveInternalTask()">Assign</button>
+                <button class="cancel" onclick="closeModal('internalTaskModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Work -->
+    <div id="submitWorkModal" class="modal">
+        <div class="modal-content">
+            <h2>Submit Work</h2>
+            <label for="sw_task">Task</label>
+            <select id="sw_task"></select>
+            <label for="sw_link">Work Link (Drive / GitHub / etc.)</label>
+            <input type="url" id="sw_link" placeholder="https://...">
+            <label for="sw_desc">Description / Notes</label>
+            <textarea id="sw_desc" placeholder="Brief description of what you did..." rows="3"></textarea>
+            <div class="modal-btns">
+                <button onclick="submitReport()" style="background:#ffb74d;color:#000;">Submit</button>
+                <button class="cancel" onclick="closeModal('submitWorkModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="head-script.js"></script>
+</body>
+</html>
