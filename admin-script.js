@@ -2,7 +2,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyBLKZWIOPPKr18-mVQc4xe_Z4Hd39GciNU",
     authDomain: "urvi-955a9.firebaseapp.com",
-    databaseURL: "https://urvi-955a9-default-rtdb.firebaseio.com", 
+    databaseURL: "https://urvi-955a9-default-rtdb.firebaseio.com",
     projectId: "urvi-955a9",
     storageBucket: "urvi-955a9.firebasestorage.app",
     messagingSenderId: "603036789816",
@@ -490,13 +490,44 @@ async function removeShowcase(rid) {
 }
 
 // --- ANNOUNCEMENTS ---
+let editingAnnouncementId = null;
+
 async function sendAnnouncement() {
     const title = document.getElementById('ann_title').value.trim();
     const body = document.getElementById('ann_body').value.trim();
     if(!title || !body) return alert("Title and Content required.");
-    await db.ref('announcements').push().set({ title, body, timestamp: Date.now() });
+    
+    if (editingAnnouncementId) {
+        await db.ref('announcements/' + editingAnnouncementId).update({ title, body, timestamp: Date.now() });
+        triggerNotification("Updated", "Announcement updated successfully.");
+        editingAnnouncementId = null;
+        document.getElementById('send-ann-btn').innerHTML = '<i class="fas fa-paper-plane"></i> Send to All Members';
+    } else {
+        await db.ref('announcements').push().set({ title, body, timestamp: Date.now() });
+        triggerNotification("Broadcast Sent", "Announcement is live.");
+    }
+    
     document.getElementById('ann_title').value = ""; document.getElementById('ann_body').value = "";
-    triggerNotification("Broadcast Sent", "Announcement is live.");
+}
+
+function editAnnouncement(id, title, body) {
+    document.getElementById('ann_title').value = title;
+    document.getElementById('ann_body').value = body;
+    editingAnnouncementId = id;
+    document.getElementById('send-ann-btn').innerHTML = '<i class="fas fa-save"></i> Update Announcement';
+    document.getElementById('ann_title').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteAnnouncement(id) {
+    if (!confirm('Permanently delete this announcement?')) return;
+    try {
+        await db.ref('announcements/' + id).update({ deleted: true });
+        triggerNotification("Deleted", "Announcement removed.", true);
+    } catch (err) {
+        console.error(err);
+        alert("Could not delete from Firebase (might be a rules issue). Error: " + err.message);
+    }
 }
 
 // --- STATS OVERVIEW ---
@@ -563,7 +594,9 @@ async function rejectReport() {
 function renderAnnouncements(data) {
     const list = document.getElementById('ann-history-list');
     if (!list) return;
-    const items = Object.entries(data).sort((a, b) => b[1].timestamp - a[1].timestamp);
+    const items = Object.entries(data)
+        .filter(([id, ann]) => !ann.deleted)
+        .sort((a, b) => b[1].timestamp - a[1].timestamp);
     if (items.length === 0) {
         list.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:0.85rem;text-align:center;padding:20px;">No announcements yet.</p>';
         return;
@@ -571,7 +604,22 @@ function renderAnnouncements(data) {
     list.innerHTML = items.slice(0, 20).map(([id, ann]) => {
         const d = new Date(ann.timestamp);
         const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        return '<div class="ann-item"><h4>' + ann.title + '</h4><p>' + ann.body + '</p><small><i class="fas fa-clock"></i> ' + dateStr + '</small></div>';
+        
+        // Escape strings for onclick handlers
+        const safeTitle = ann.title.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeBody = ann.body.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        
+        return `<div class="ann-item" style="position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <h4>${ann.title}</h4>
+                <div class="ann-actions" style="display:flex; gap:12px;">
+                    <button onclick="editAnnouncement('${id}', '${safeTitle}', '${safeBody}')" style="background:none;border:none;color:#00e5ff;cursor:pointer;font-size:1rem;" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteAnnouncement('${id}')" style="background:none;border:none;color:#ff4d4d;cursor:pointer;font-size:1rem;" title="Delete"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <p>${ann.body}</p>
+            <small><i class="fas fa-clock"></i> ${dateStr}</small>
+        </div>`;
     }).join('');
 }
 
