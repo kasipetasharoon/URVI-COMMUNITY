@@ -15,6 +15,30 @@
 
     <div class="dashboard-wrapper">
 
+        <!-- ── Sidebar ── -->
+        <nav class="sidebar" id="sidebar">
+            <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Close menu"><i class="fas fa-times"></i></button>
+            <div class="sidebar-header">
+                <img src="/LOGO.png" alt="URVI Logo" onerror="this.style.display='none'">
+                <h2>URVI</h2>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <li class="active" onclick="showSection('overview', this)"><i class="fas fa-chart-line"></i> Command Center</li>
+                <li onclick="showSection('members', this)"><i class="fas fa-users"></i> Directory</li>
+                <li onclick="showSection('teams', this)"><i class="fas fa-sitemap"></i> Teams</li>
+                <li onclick="showSection('tasks', this)"><i class="fas fa-tasks"></i> Task Board</li>
+                <li onclick="showSection('submissions', this)"><i class="fas fa-check-circle"></i> Reviews <span id="badge" class="badge" style="display:none;">0</span></li>
+                <li onclick="showSection('global_showcase', this)"><i class="fas fa-globe"></i> Showcase</li>
+                <li onclick="showSection('announcements', this)"><i class="fas fa-bullhorn"></i> Announcements</li>
+            </ul>
+            <div class="sidebar-footer">
+                <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </nav>
+
+        <!-- ── Overlay ── -->
+        <div class="menu-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
         <!-- ── Main Content ── -->
         <main class="main-content">
 
